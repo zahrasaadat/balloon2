@@ -1,11 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.SceneManagement;
+//[RequireComponent(typeof(AudioSource))]
 public class BalloonSpawner : MonoBehaviour {
     public GameObject[] badkonakha = new GameObject[10];
     public GameObject[] dast = new GameObject[10];
-    public GameObject boom;
+    public GameObject boom1;
+    public GameObject boom2;
+    public GameObject boom3;
     public GameObject board;
     public GameObject correctBalloon;
     public GameObject MainCamera;
@@ -18,8 +21,11 @@ public class BalloonSpawner : MonoBehaviour {
     TouchPhase touchPhase = TouchPhase.Ended;
     public float Timeouttime = 4.0f;
     public float Timecounter=0.0f;
-    public AudioSource balloonPop;
-    bool wait = true;
+    // public Animator myanim;
+    public AudioClip balloonPop;
+    public AudioSource audios;
+    public AudioClip wrong;
+    private bool b;
     public class Balloon
     {
         public GameObject BalloonImage;
@@ -47,7 +53,10 @@ public class BalloonSpawner : MonoBehaviour {
     }
     private void Awake()
     {
-       
+
+        audios = GetComponent<AudioSource>();
+        balloonPop = (AudioClip)Resources.Load("Assets/prefabs/pop");
+        wrong = (AudioClip)Resources.Load("Assets/prefabs/wrong");
         for (int i = 0; i < 10; i++)
         {
             balloons[i] = new Balloon(badkonakha[i], i + 1);
@@ -64,25 +73,27 @@ public class BalloonSpawner : MonoBehaviour {
     }
     void Update()
     {
-   
-        
-        if (BalloonGame())
+
+        b = BalloonGame();
+        if (b)
         {
 
-            balloonPop.Play();
+            audios.clip=balloonPop;
+            audios.Play();
+          
             Destroy(touchedObject);
-            Instantiate(boom, correctBalloon.transform.position, boom.transform.rotation);
-           
-            while (Timecounter < Timeouttime) { 
+            GameObject BOOM3= Instantiate(boom3, correctBalloon.transform.position, boom1.transform.rotation);
+            GameObject BOOM2 = Instantiate(boom2, correctBalloon.transform.position, boom2.transform.rotation);
+            GameObject BOOM1 = Instantiate(boom1, correctBalloon.transform.position, boom3.transform.rotation);
+            StartCoroutine(waiter(BOOM1,BOOM2,BOOM3));
+          
             
-                Timecounter += Time.deltaTime;
-            }
-           
-            Application.LoadLevel("main");
         }
-    }
-   void FixedUpdate()
-    {
+        else
+        {
+           audios.clip = wrong;
+            audios.Play();
+        }
        
     }
     bool BalloonGame()
@@ -100,18 +111,28 @@ public class BalloonSpawner : MonoBehaviour {
             }
             if (touchedObject == correctBalloon)
             {
-            
                 return true;
                 
             }
         }
         return false;
     }
-    IEnumerator waiter()
+    private void FixedUpdate()
     {
-        yield return new WaitForSeconds(2f);
-        wait = false;
+        
     }
+    IEnumerator waiter(GameObject g1, GameObject g2, GameObject g3)
+    {
+        yield return new WaitForSeconds(0.2f);
+        Destroy(g1);
+        yield return new WaitForSeconds(0.2f);
+        Destroy(g2);
+        yield return new WaitForSeconds(0.2f);
+        Destroy(g3);
+        yield return new WaitForSeconds(0.2f);
+        SceneManager.LoadScene("main");
+    }
+
     public void DeleteAll()
     {
         foreach (GameObject o in Object.FindObjectsOfType<GameObject>())
